@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter Video link & advertising remove
 // @namespace    https://twitter.com/
-// @version      0.1
+// @version      0.1.0
 // @updateURL    https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @downloadURL  https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @description  none
@@ -18,7 +18,7 @@ const getTweetssWithGif = tweets => tweets.filter(tweet => tweetByMediaType({ tw
 
 const haveMedia = tweet => {
 
-    if (isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet)) {
+    if (isClosedTweet(tweet) && !isRestrictedTweet(tweet)) {
         return [4, 5].includes(tweet.children[0].children[1].children[1].childElementCount)
     }
 
@@ -29,11 +29,11 @@ const haveMedia = tweet => {
     return false
 }
 
-const isSimplifiedTweet = tweet => tweet.children[0].childElementCount === 2
+const isClosedTweet = tweet => tweet.children[0].childElementCount === 2
 
 const isOpenTweet = tweet => [6, 7].includes(tweet.children[0].childElementCount)
 
-const isRestrictedTweet = tweet => isSimplifiedTweet(tweet) && tweet.children[0].children[1].childElementCount === 1
+const isRestrictedTweet = tweet => isClosedTweet(tweet) && tweet.children[0].children[1].childElementCount === 1
 
 const tweetHavePlayButton = tweet => {
     if (haveMedia(tweet)) {
@@ -41,7 +41,7 @@ const tweetHavePlayButton = tweet => {
           return Boolean(tweet.children[0].children[3].querySelector('[data-testid="playButton"]'))
       }
 
-      if (isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet)) {
+      if (isClosedTweet(tweet) && !isRestrictedTweet(tweet)) {
           return Boolean(tweet.children[0].querySelector('[data-testid="playButton"]'))
       }
 
@@ -59,7 +59,7 @@ const tweetByMediaType = ({ tweet, mediaType }) => {
              playButton = tweet.children[0].children[3].querySelector('[data-testid="playButton"]')
         }
 
-        if (isSimplifiedTweet(tweet)) {
+        if (isClosedTweet(tweet)) {
              playButton = tweet.children[0].querySelector('[data-testid="playButton"]')
         }
 
@@ -99,7 +99,7 @@ const haveAnEmbededTweet = tweet => {
         return tweet.children[0].children[3].children[0].children[0].childElementCount === 2
     }
     // @TODO fix
-    if (isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet) && tweetHavePlayButton(tweet) && !tweetByMediaType({ tweet, mediaType: 'gif' })) {
+    if (isClosedTweet(tweet) && !isRestrictedTweet(tweet) && tweetHavePlayButton(tweet) && !tweetByMediaType({ tweet, mediaType: 'gif' })) {
         if (Boolean(tweet.children[0].children[1].children[1].children[2].children[0].children[0])) {
             return tweet.children[0].children[1].children[1].children[2].children[0].children[0].childElementCount === 2
         }
@@ -110,7 +110,7 @@ const haveAnEmbededTweet = tweet => {
 
 const autoPlayIsActivated = tweet => Boolean(tweet.children[0].querySelector('video'))
 
-const getSimplifiedTweetUrl = tweet => {
+const getClosedTweetUrl = tweet => {
     const url = 'https://twitter.com' + tweet.children[0].children[1].children[1].children[0].children[0].children[0].children[2].getAttribute('href') + '/video/1'
     return url
 }
@@ -120,7 +120,7 @@ const isVideoOwner = ({ tweet, currentUrl, videoUrl}) => {
         return !Boolean(tweet.children[0].children[3].children[0].children[1])
     }
 
-    if (isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet)) {
+    if (isClosedTweet(tweet) && !isRestrictedTweet(tweet)) {
         return tweet.children[0].children[1].children[1].children[2].children[0].childElementCount === 1 //|| getTweetOwner(currentUrl) === getTweetOwner(videoUrl)
     }
 
@@ -173,7 +173,7 @@ const createLinkButtonNode = ({ actionsNode, elementId, linkSvg, tweet }) => {
   const actionNodeClone = actionNode.cloneNode(true)
         actionNodeClone.setAttribute("id", elementId);
         
-        if (tweet.isSimplifiedTweet) {
+        if (tweet.isClosedTweet) {
             actionNodeClone.style = 'margin-left: 55px;'
         }
 
@@ -239,13 +239,13 @@ const mainFunction = () => {
                     haveVideo: tweetByMediaType({ tweet, mediaType: 'video' }),
                     haveGif: tweetByMediaType({ tweet, mediaType: 'gif' }),
                     autoplay: autoPlayIsActivated(tweet),
-                    isSimplifiedTweet: isSimplifiedTweet(tweet),
+                    isClosedTweet: isClosedTweet(tweet),
                     currentUrl: location.href,
                     haveAnEmbededTweet: '@TODO and fix the link when the video is clicked'
                 }
 
                 if (newTweet.haveVideo) {
-                    newTweet.videoUrl = isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet) ? getSimplifiedTweetUrl(tweet) : location.href + '/video/1'
+                    newTweet.videoUrl = isClosedTweet(tweet) && !isRestrictedTweet(tweet) ? getClosedTweetUrl(tweet) : location.href + '/video/1'
                     
                     const { tweetId } = regexp()
                     const tweetIdMatch = newTweet.videoUrl.match(tweetId) 
@@ -270,8 +270,8 @@ const mainFunction = () => {
                 addCopyUrlButton({ elementClone: tweetOpened, linkSvg, isOpened: true })
             }
 
-            const tweetsSimplified = tweetsDetails.filter(({ tweet }) => isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet))
-            tweetsSimplified.forEach(tweet => {
+            const tweetsClosed = tweetsDetails.filter(({ tweet }) => isClosedTweet(tweet) && !isRestrictedTweet(tweet))
+            tweetsClosed.forEach(tweet => {
                 tweetIdList.push(tweet)
                 addCopyUrlButton({ elementClone: tweet, linkSvg, isOpened: false })
             })
