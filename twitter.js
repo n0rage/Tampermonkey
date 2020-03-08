@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter Video link & advertising remove
 // @namespace    https://twitter.com/
-// @version      0.1.0
+// @version      0.1
 // @updateURL    https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @downloadURL  https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @description  none
@@ -96,13 +96,11 @@ const tweetByMediaType = ({ tweet, mediaType }) => {
 
 const haveAnEmbededTweet = tweet => {
     if (isOpenTweet(tweet) && tweetHavePlayButton(tweet)) {
-        return tweet.children[0].children[3].children[0].children[0].childElementCount === 2
+        return Boolean(tweet.children[0].children[3].children[0].querySelector('[role=presentation]'))
     }
-    // @TODO fix
+
     if (isClosedTweet(tweet) && !isRestrictedTweet(tweet) && tweetHavePlayButton(tweet) && !tweetByMediaType({ tweet, mediaType: 'gif' })) {
-        if (Boolean(tweet.children[0].children[1].children[1].children[2].children[0].children[0])) {
-            return tweet.children[0].children[1].children[1].children[2].children[0].children[0].childElementCount === 2
-        }
+        return Boolean(tweet.children[0].children[1].children[1].children[2].querySelector('[role=presentation'))
     }
 
     return false
@@ -115,7 +113,7 @@ const getClosedTweetUrl = tweet => {
     return url
 }
 
-const isVideoOwner = ({ tweet, currentUrl, videoUrl}) => {
+const isVideoOwner = ({ tweet, currentUrl, videoUrl }) => {
     if (isOpenTweet(tweet)) {
         return !Boolean(tweet.children[0].children[3].children[0].children[1])
     }
@@ -225,9 +223,9 @@ const regexp = () => ({
 
 
 const mainFunction = () => {
-    const { statusPageAndTimelinePage, searchPage, homePage } = regexp()
+    const { statusPageAndTimelinePage, searchPage } = regexp()
 
-    if ((statusPageAndTimelinePage).test(location.href) || (searchPage).test(location.href) || (homePage).test(location.href)) {
+    if ((statusPageAndTimelinePage).test(location.href) || (searchPage).test(location.href)) {
 
         const tweets = getTweets()
 
@@ -241,10 +239,10 @@ const mainFunction = () => {
                     autoplay: autoPlayIsActivated(tweet),
                     isClosedTweet: isClosedTweet(tweet),
                     currentUrl: location.href,
-                    haveAnEmbededTweet: '@TODO and fix the link when the video is clicked'
+                    haveAnEmbededTweet: haveAnEmbededTweet(tweet)
                 }
 
-                if (newTweet.haveVideo) {
+                if (newTweet.haveVideo && !newTweet.haveAnEmbededTweet) {
                     newTweet.videoUrl = isClosedTweet(tweet) && !isRestrictedTweet(tweet) ? getClosedTweetUrl(tweet) : location.href + '/video/1'
 
                     const { tweetId } = regexp()
