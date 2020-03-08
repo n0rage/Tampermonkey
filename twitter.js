@@ -18,7 +18,7 @@ const getTweetssWithGif = tweets => tweets.filter(tweet => tweetByMediaType({ tw
 
 const haveMedia = tweet => {
     if (isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet)) {
-        return tweet.children[0].children[1].children[1].childElementCount === 4
+        return tweet.children[0].children[1].children[1].childElementCount === 5
     }
 
     if(isOpenTweet(tweet)) {
@@ -98,17 +98,18 @@ const tweetByMediaType = ({ tweet, mediaType }) => {
 
 const autoPlayIsActivated = tweet => Boolean(tweet.children[0].querySelector('video'))
 
-const isVideoOwner = tweet => {
-    let videoElement = null
+const getSimplifiedTweetUrl = tweet => {
+    const url = 'https://twitter.com/' + tweet.children[0].children[1].children[1].children[0].children[0].children[0].children[2].getAttribute('href') + '/video/1'
+    return url
+}
 
+const isVideoOwner = tweet => {
     if (isOpenTweet(tweet)) {
-        videoElement = tweet.children[0].children[3]
-        return [1, 2, 4].includes(videoElement.querySelectorAll('[dir="auto"]').length)
+        return !Boolean(tweet.children[0].children[3].children[0].children[1])
     }
 
     if (isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet)) {
-        videoElement = tweet.children[0].children[1].children[1].children[2]
-        return [1, 2, 4].includes(videoElement.querySelectorAll('[dir="auto"]').length)
+        return !Boolean(tweet.children[0].children[1].children[1].children[2].children[0].children[1])
     }
 
     return false
@@ -125,7 +126,8 @@ const regexp = () => ({
     searchPage: /search\?q=\w+&src=\w+/,
     homePage: /\/home$/,
     isMp4: /\.mp4$/,
-    isBlob: /^blob/
+    isBlob: /^blob/,
+    tweetId: /\/(\d+)\//
 })
 
 const linkSvg = () => '<path d="M11.96 14.945c-.067 0-.136-.01-.203-.027-1.13-.318-2.097-.986-2.795-1.932-.832-1.125-1.176-2.508-.968-3.893s.942-2.605 2.068-3.438l3.53-2.608c2.322-1.716 5.61-1.224 7.33 1.1.83 1.127 1.175 2.51.967 3.895s-.943 2.605-2.07 3.438l-1.48 1.094c-.333.246-.804.175-1.05-.158-.246-.334-.176-.804.158-1.05l1.48-1.095c.803-.592 1.327-1.463 1.476-2.45.148-.988-.098-1.975-.69-2.778-1.225-1.656-3.572-2.01-5.23-.784l-3.53 2.608c-.802.593-1.326 1.464-1.475 2.45-.15.99.097 1.975.69 2.778.498.675 1.187 1.15 1.992 1.377.4.114.633.528.52.928-.092.33-.394.547-.722.547z"></path><path d="M7.27 22.054c-1.61 0-3.197-.735-4.225-2.125-.832-1.127-1.176-2.51-.968-3.894s.943-2.605 2.07-3.438l1.478-1.094c.334-.245.805-.175 1.05.158s.177.804-.157 1.05l-1.48 1.095c-.803.593-1.326 1.464-1.475 2.45-.148.99.097 1.975.69 2.778 1.225 1.657 3.57 2.01 5.23.785l3.528-2.608c1.658-1.225 2.01-3.57.785-5.23-.498-.674-1.187-1.15-1.992-1.376-.4-.113-.633-.527-.52-.927.112-.4.528-.63.926-.522 1.13.318 2.096.986 2.794 1.932 1.717 2.324 1.224 5.612-1.1 7.33l-3.53 2.608c-.933.693-2.023 1.026-3.105 1.026z"></path>'
@@ -173,7 +175,7 @@ const createLinkButtonNode = ({ actionsNode, elementId, linkSvg }) => {
         actionNode.insertAdjacentHTML('afterend', actionNodeClone.outerHTML)
 }
 
-const mainFunction = mutations => {
+const mainFunction = () => {
     const { statusPage } = regexp()
 
     if ((statusPage).test(location.href)) {
@@ -192,8 +194,12 @@ const mainFunction = mutations => {
                     owner: getTweetOwner(location.href)
                 }
 
-                if (isOpenTweet(tweet) && newTweet.haveVideo) {
-                    newTweet.videoUrl = location.href + '/video/1'
+                if (newTweet.haveVideo) {
+                    newTweet.videoUrl = isSimplifiedTweet(tweet) && !isRestrictedTweet(tweet) ? getSimplifiedTweetUrl(tweet) : location.href + '/video/1'
+                    
+                    const { tweetId } = regexp()
+                    const tweetIdMatch = newTweet.videoUrl.match(tweetId) 
+                    newTweet.id = 'tweet-id-' + tweetIdMatch[1]
                 }
 
                 acc.push(newTweet)
@@ -202,16 +208,16 @@ const mainFunction = mutations => {
 
             const tweetOpened = tweetsDetails.find(({ tweet }) => isOpenTweet(tweet))
 
-            if (tweetOpened.tweet && tweetOpened.haveVideo && tweetOpened.isVideoOwner) {
+            if (tweetOpened && tweetOpened.tweet && tweetOpened.haveVideo && tweetOpened.isVideoOwner) {
 
                 const tweetActions = tweetOpened.tweet.children[0].children[6]
 
-                if (!tweetActions.querySelector('#copy-video-url')) {
-                    createLinkButtonNode({ actionsNode: tweetActions, elementId: 'copy-video-url', linkSvg })
+                if (!tweetActions.querySelector('#' + tweetOpened.id)) {
+                    createLinkButtonNode({ actionsNode: tweetActions, elementId: tweetOpened.id, linkSvg })
                 }
 
                 document.addEventListener('click', e => {
-                    if (e.target && e.target.id === 'copy-video-url') {
+                    if (e.target && e.target.id === tweetOpened.id) {
                         const tempInput = createTempInputNode(tweetOpened.videoUrl)
                         copyVideoLink(tempInput)
                         createTooltipNode()
