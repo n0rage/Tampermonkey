@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter Video link & advertising remove
 // @namespace    https://twitter.com/
-// @version      0.1.0
+// @version      0.1.1
 // @updateURL    https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @downloadURL  https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @description  none
@@ -9,6 +9,8 @@
 // @match        https://twitter.com/*
 // @run-at       document-idle
 // ==/UserScript==
+
+// test update
 
 const getTweets = () => Array.from(document.querySelectorAll('article'))
 
