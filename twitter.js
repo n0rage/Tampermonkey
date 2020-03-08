@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter Video link & advertising remove
 // @namespace    https://twitter.com/
-// @version      0.1.1
+// @version      0.1.0
 // @updateURL    https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @downloadURL  https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @description  none
@@ -9,8 +9,6 @@
 // @match        https://twitter.com/*
 // @run-at       document-idle
 // ==/UserScript==
-
-// test update
 
 const getTweets = () => Array.from(document.querySelectorAll('article'))
 
@@ -174,7 +172,7 @@ const createLinkButtonNode = ({ actionsNode, elementId, linkSvg, tweet }) => {
 
   const actionNodeClone = actionNode.cloneNode(true)
         actionNodeClone.setAttribute("id", elementId);
-        
+
         if (tweet.isClosedTweet) {
             actionNodeClone.style = 'margin-left: 55px;'
         }
@@ -201,7 +199,7 @@ const addCopyUrlButton = ({ elementClone, linkSvg, isOpened }) => {
 
             tweetActions = Boolean(elementClone.tweet.children[0].children[1].children[1].children[4]) ? elementClone.tweet.children[0].children[1].children[1].children[4] : elementClone.tweet.children[0].children[1].children[1].children[3]
         }
-  
+
         if (!tweetActions.querySelector('#' + elementClone.id)) {
             createLinkButtonNode({ actionsNode: tweetActions, elementId: elementClone.id, linkSvg, tweet: elementClone })
         }
@@ -227,9 +225,9 @@ const regexp = () => ({
 
 
 const mainFunction = () => {
-    const { statusPageAndTimelinePage, searchPage } = regexp()
+    const { statusPageAndTimelinePage, searchPage, homePage } = regexp()
 
-    if ((statusPageAndTimelinePage).test(location.href) || (searchPage).test(location.href)) {
+    if ((statusPageAndTimelinePage).test(location.href) || (searchPage).test(location.href) || (homePage).test(location.href)) {
 
         const tweets = getTweets()
 
@@ -248,9 +246,9 @@ const mainFunction = () => {
 
                 if (newTweet.haveVideo) {
                     newTweet.videoUrl = isClosedTweet(tweet) && !isRestrictedTweet(tweet) ? getClosedTweetUrl(tweet) : location.href + '/video/1'
-                    
+
                     const { tweetId } = regexp()
-                    const tweetIdMatch = newTweet.videoUrl.match(tweetId) 
+                    const tweetIdMatch = newTweet.videoUrl.match(tweetId)
 
                     newTweet.id = 'tweet-id-' + tweetIdMatch[1]
                     newTweet.videoOwner = getVideoOwner(newTweet.videoUrl)
