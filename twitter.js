@@ -2,6 +2,8 @@
 // @name         Twitter Video link & advertising remove
 // @namespace    https://twitter.com/
 // @version      0.1
+// @updateURL    https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
+// @downloadURL  https://github.com/n0rage/Tampermonkey/blob/master/twitter.js
 // @description  none
 // @author       @no__rage
 // @match        https://twitter.com/*
