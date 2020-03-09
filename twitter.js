@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twitter Video link & advertising remove
 // @namespace    https://twitter.com/
-// @version      0.1.0
+// @version      0.1.1
 // @updateURL    https://raw.githubusercontent.com/n0rage/Tampermonkey/master/twitter.js
 // @downloadURL  https://raw.githubusercontent.com/n0rage/Tampermonkey/master/twitter.js
 // @description  none
